@@ -51,7 +51,6 @@ sub lookup_mx {
     eval {
     	local $SIG{ALRM} = sub { die "alarm\n" };
         alarm TIMEOUT;
-	sleep 30;
         @mx = mx($domain);
 	alarm 0;
     };
