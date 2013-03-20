@@ -5,6 +5,9 @@ use warnings FATAL => 'all';
 use Net::DNS qw(mx);
 use List::Util qw(min);
 use HTTP::Date qw(time2str);
+use HTTP::Status qw(:constants status_message);
+
+use constant TIMEOUT => 10;
 
 #Keep on one line to keep CPAN and friends happy
 ( my $SVN_VERSION = q$Revision: 1569 $ ) =~ s/Revision:\s+(.*)\s+/$1/; our $VERSION = "0.03/$SVN_VERSION";
@@ -42,10 +45,25 @@ sub send_headers {
 
 sub lookup_mx {
     my $domain = shift;
-    my @mx     = mx($domain);
+    my @mx;
+    my $status = HTTP_NOT_FOUND;
+    
+    eval {
+    	local $SIG{ALRM} = sub { die "alarm\n" };
+        alarm TIMEOUT;
+	sleep 30;
+        @mx = mx($domain);
+	alarm 0;
+    };
+    
+    if ($@ and $@ eq "alarm\n") {
+	@mx = ();
+	$status = HTTP_GATEWAY_TIMEOUT;
+    }
+    
     unless (@mx) {
         warn "No MX data for $domain";
-        print "Status: 404 Not Found\r\n\r\n";
+	print "Status: $status " , status_message($status), "\r\n\r\n";
         print "No MX data for $domain\n";
         exit;
     }
