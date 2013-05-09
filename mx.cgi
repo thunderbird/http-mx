@@ -10,7 +10,7 @@ use HTTP::Status qw(:constants status_message);
 use constant TIMEOUT => 10;
 
 #Keep on one line to keep CPAN and friends happy
-( my $SVN_VERSION = q$Revision: 1569 $ ) =~ s/Revision:\s+(.*)\s+/$1/; our $VERSION = "0.03/$SVN_VERSION";
+our $VERSION = "0.02";
 
 my %headers = (
                'Content-type'  => 'text/plain',
