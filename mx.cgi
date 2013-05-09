@@ -10,7 +10,7 @@ use HTTP::Status qw(:constants status_message);
 use constant TIMEOUT => 10;
 
 #Keep on one line to keep CPAN and friends happy
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 my %headers = (
                'Content-type'  => 'text/plain',

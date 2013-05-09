@@ -1,4 +1,4 @@
-version = "1.04"
+version = "0.03"
 
 import DNS
 DNS.DiscoverNameServers()
