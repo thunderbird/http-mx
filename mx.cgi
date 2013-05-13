@@ -11,7 +11,7 @@ use constant NAMESERVERS => [qw(8.8.8.8 8.8.4.4)];
 use constant TIMEOUT => 10;
 
 #Keep on one line to keep CPAN and friends happy
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 
 my %headers = (
                'Content-type'  => 'text/plain',
