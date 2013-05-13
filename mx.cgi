@@ -2,11 +2,12 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Net::DNS qw(mx);
+use Net::DNS::Resolver ();
 use List::Util qw(min);
 use HTTP::Date qw(time2str);
 use HTTP::Status qw(:constants status_message);
 
+use constant NAMESERVERS => [qw(8.8.8.8 8.8.4.4)];
 use constant TIMEOUT => 10;
 
 #Keep on one line to keep CPAN and friends happy
@@ -47,11 +48,17 @@ sub lookup_mx {
     my $domain = shift;
     my @mx;
     my $status = HTTP_NOT_FOUND;
+
+    my $res = Net::DNS::Resolver->new(
+                 nameservers => NAMESERVERS,
+                 recurse     => 1,
+                 debug       => 0,
+   );
     
     eval {
     	local $SIG{ALRM} = sub { die "alarm\n" };
         alarm TIMEOUT;
-        @mx = mx($domain);
+        @mx = $res->mx($domain);
 	alarm 0;
     };
     
