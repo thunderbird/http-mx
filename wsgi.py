@@ -25,7 +25,7 @@ def application(environ, start_response):
             data = "DNS Server Timeout"
         else:
             status = "404 Not Found"
-            data = "No MX data for %s" % domain
+            data = "No MX data for %s\n" % domain
 
     expires = get_expires(ttl)
     length = sum([len(i) for i in data])
