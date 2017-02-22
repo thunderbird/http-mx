@@ -60,9 +60,10 @@ def mxlookup(domain):
     if result:
         error = False
         for a in result:
-            answers.append(a.exchange.to_text().rstrip('.'))
+            answers.append((a.preference, a.exchange.to_text().rstrip('.')))
         ttl = result.rrset.ttl
         answers.sort()
+        answers = map(lambda x: x[1], answers)
 
     return (error, answers, ttl)
 
