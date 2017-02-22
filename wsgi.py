@@ -1,7 +1,6 @@
 version = "0.04"
 
-import DNS
-DNS.DiscoverNameServers()
+import dns.exception, dns.resolver
 
 DEFAULT_TTL = 300
 timeout = 10
@@ -42,23 +41,28 @@ def application(environ, start_response):
 
 
 def mxlookup(domain):
+    resolver = dns.resolver.Resolver()
+    resolver.lifetime = timeout
+
     try:
-        result = DNS.DnsRequest(name=domain, qtype='mx', timeout=timeout).req()
-    except DNS.Base.TimeoutError:
+        result = resolver.query(domain, 'MX')
+    except dns.exception.Timeout:
         return (504, False, False)
+    except dns.resolver.NoAnswer:
+        return (404, False, False)
+    except dns.resolver.NXDOMAIN:
+        return (404, False, False)
 
     answers = []
     ttls = []
     ttl = False
     error = 404
-    if result.header['status'] == 'NOERROR' and result.answers:
+    if result:
         error = False
-        for a in result.answers:
-            answers.append(a['data'])
-            ttls.append(a['ttl'])
-        ttl = min(ttls)
+        for a in result:
+            answers.append(a.exchange.to_text())
+        ttl = result.rrset.ttl
         answers.sort()
-        answers = map(lambda x: x[1], answers)
 
     return (error, answers, ttl)
 
