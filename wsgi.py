@@ -1,33 +1,37 @@
-version = "0.04"
+version = "1.00"
 
-import dns.exception, dns.resolver
+import dns.exception
+import dns.resolver
+from wsgiref.handlers import format_date_time
+from datetime import datetime, timedelta
+from time import mktime
 
 DEFAULT_TTL = 300
 timeout = 10
 
+
 def application(environ, start_response):
-    data =  []
+    data = []
     domain = environ['PATH_INFO'].lstrip('/')
     status = "200 OK"
     ttl = DEFAULT_TTL
 
     if domain == '':
-        data = "Thunderbird MX Lookup v%s running on %s\n" % (version, environ['SERVER_SOFTWARE'])
+        data = [("Thunderbird MX Lookup v%s running on %s\n" % (version, environ['SERVER_SOFTWARE'])).encode('utf-8')]
     else:
         error, mxes, ttl = mxlookup(domain)
         if not error and mxes:
             for mx in mxes:
-                answer = "%s\n" % mx
-                data.append(answer)
+                data.append(("%s\n" % mx).encode('utf-8'))
         elif error == 504:
             status = "504 Gateway Timeout"
-            data = "DNS Server Timeout"
+            data = [b"DNS Server Timeout"]
         else:
             status = "404 Not Found"
-            data = "No MX data for %s\n" % domain
+            data = [("No MX data for %s\n" % domain).encode('utf-8')]
 
     expires = get_expires(ttl)
-    length = sum([len(i) for i in data])
+    length = sum(len(i) for i in data)
 
     start_response(status, [
         ("Content-Type", "text/plain"),
@@ -45,7 +49,7 @@ def mxlookup(domain):
     resolver.lifetime = timeout
 
     try:
-        result = resolver.query(domain, 'MX')
+        result = resolver.resolve(domain, 'MX')
     except dns.exception.Timeout:
         return (504, False, False)
     except dns.resolver.NoAnswer:
@@ -54,7 +58,6 @@ def mxlookup(domain):
         return (404, False, False)
 
     answers = []
-    ttls = []
     ttl = False
     error = 404
     if result:
@@ -63,30 +66,24 @@ def mxlookup(domain):
             answers.append((a.preference, a.exchange.to_text().rstrip('.')))
         ttl = result.rrset.ttl
         answers.sort()
-        answers = map(lambda x: x[1], answers)
+        answers = [x[1] for x in answers]
 
     return (error, answers, ttl)
 
-from wsgiref.handlers import format_date_time
-from datetime import datetime, timedelta
-from time import mktime
+
 def get_expires(ttl):
     now = datetime.now() + timedelta(0, ttl)
     stamp = mktime(now.timetuple())
     return format_date_time(stamp)
 
+
 if __name__ == '__main__':
-    # this runs when script is started directly from commandline
     try:
-        # create a simple WSGI server and run the application
         from wsgiref import simple_server
-        print "Running test application - point your browser at http://localhost:8000/ ..."
+        print("Running test application - point your browser at http://localhost:8000/ ...")
         httpd = simple_server.WSGIServer(('', 8000), simple_server.WSGIRequestHandler)
         httpd.set_app(application)
         httpd.serve_forever()
     except ImportError:
-        # wsgiref not installed, just output html to stdout
         for content in application({}, lambda status, headers: None):
-            print content
-
-
+            print(content)
